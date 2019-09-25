@@ -3,6 +3,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.json.JSONObject;
@@ -38,8 +40,7 @@ public class httpc {
 		
 		if(noMethod==true) {
 		get(arg);	
-		}
-	
+		}	
 		
 
 	}
@@ -69,6 +70,14 @@ public class httpc {
         while ((i = inp.readLine()) != null) {
         	reply.append(i).append("\n");
         }
+        
+       if(verbose==true) {
+    	   Map<String, List<String>> map = connection.getHeaderFields();
+       	for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+       		System.out.println(entry.getKey() + 
+                        " : " + entry.getValue());
+       	}
+       }
         in.close();
         
       
