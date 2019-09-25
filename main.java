@@ -3,37 +3,77 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Scanner;
+
 import org.json.JSONObject;
 
 public class httpc {
 
 	public static void main(String[] args) throws Exception {
 	
-		String s="http://httpbin.org/get?course=networking&assignment=1";
-		URL u=new URL(s);
+
+		Scanner sc = new Scanner(System.in);
+        String arg[] = sc.nextLine().split(" ");
+        boolean noMethod=true;
+		
+		for (String str : arg) {
+            if (str.toLowerCase().equals("help")) {
+               // help(arg);
+                
+            }
+            
+            if(str.toLowerCase().equals("get")) {
+            	noMethod=false;
+            	get(arg);
+            }
+            
+            if(str.toLowerCase().equals("post")) {
+            	noMethod=false;
+            	//post(arg);
+            }
+            
+           
+            
+		}
+		
+		if(noMethod==true) {
+		get(arg);	
+		}
+	
+		
+
+	}
+	
+	public static void get(String s[]) throws Exception {
+			
+		String link = null;
+		boolean verbose=false;
+		for(String str:s) {
+			if (str.startsWith("http://")) {
+				link=str;
+			}
+			
+			if (str.equals("-v")) {
+                verbose = true;
+            }
+
+		}
+
+		URL u=new URL(link);
 		HttpURLConnection connection = (HttpURLConnection) u.openConnection();
 		connection.setRequestMethod("GET");
 		InputStream in = connection.getInputStream();
-      //  String reply = jsontoString(in);
-       // int responseCode = connection.getResponseCode();
-      //  System.out.println("\nSending 'GET' request to URL : " + u);
-       // System.out.println("Response Code : " + responseCode);
         BufferedReader inp = new BufferedReader(new InputStreamReader(connection.getInputStream()));
         String i;
-        StringBuffer response = new StringBuffer();
+        StringBuffer reply = new StringBuffer();
         while ((i = inp.readLine()) != null) {
-        	response.append(i);
+        	reply.append(i).append("\n");
         }
         in.close();
         
-        //print in String
-        System.out.println(response.toString());
-       
-        
-       
+      
+        System.out.println(reply.toString());
 		
-		
-
 	}
 
 }
