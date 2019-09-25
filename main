@@ -1,0 +1,87 @@
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+
+
+
+public class httpc {
+
+	public static void main(String[] args) throws Exception {
+		Scanner sc = new Scanner(System.in);
+        String arg[] = sc.nextLine().split(" ");
+        boolean noMethod=true;
+		
+		for (String str : arg) {
+            if (str.toLowerCase().equals("help")) {
+                help(arg);               
+            }
+            if(str.toLowerCase().equals("get")) {
+            	noMethod=false;
+            	get(arg);
+            }
+            if(str.toLowerCase().equals("post")) {
+            	noMethod=false;
+            	//post(arg);
+            }    
+		}
+		if(noMethod==true) {
+		get(arg);	
+		}	
+	}
+	
+	
+	public static void help(String string[]) {
+        if ( string[0].equals("httpc") & string[1].equals("help") & string[2].equals("get") & string.length==3 ) {
+            System.out.println(
+                    "usage: httpc get [-v] [-h key:value] URL\n" + "Get executes a HTTP GET request for a given URL.\n"+ "   -v             Prints the detail of the response such as protocol, status,\n"
+                            + "and headers.\n" + "   -h key:value   Associates headers to HTTP Request with the format\n"+ "'key:value'.");
+
+        } else if (string[0].equals("httpc") & string[1].equals("help") & string[2].equals("post") & string.length==3) {
+            System.out.println("usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL\n"+
+                     "Post executes a HTTP POST request for a given URL with inline data or from\n" + "file.\n"+"   -v             Prints the detail of the response such as protocol, status,\n"+
+                     "and headers.\n" + "   -h key:value   Associates headers to HTTP Request with the format\n"+"'key:value'.\n" + "   -d string      Associates an inline data to the body HTTP POST request.\n"+
+                     "   -f file        Associates the content of a file to the body HTTP POST\n" + "request.\n"+"Either [-d] or [-f] can be used but not both.");
+        }
+        else if (string[0].equals("httpc") & string[1].equals("help") & string.length==2) {
+            System.out.println("httpc is a curl-like application but supports HTTP protocol only.\n" + "Usage: \n"+ "   httpc command [arguments]\n " + "The commands are:\n"+ "   get executes a HTTP GET request and prints the response.\n"
+                    + "   post executes a HTTP POST request and prints the response. \n"+ "   help prints this screen. \n"+ "Use \"httpc help [command]\" for more information about a command.\n");
+        }
+    }
+	
+	public static void get(String s[]) throws Exception {
+		String link = null;
+		boolean verbose=false;
+		for(String str:s) {
+			if (str.startsWith("http://")) {
+				link=str;
+			}
+			if (str.equals("-v")) {
+                verbose = true;
+            }
+		}
+		URL u=new URL(link);
+		HttpURLConnection connection = (HttpURLConnection) u.openConnection();
+		connection.setRequestMethod("GET");
+		InputStream in = connection.getInputStream();
+        BufferedReader inp = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        String i;
+        StringBuffer reply = new StringBuffer();
+        while ((i = inp.readLine()) != null) {
+        	reply.append(i).append("\n");
+        }
+       if(verbose==true) {
+    	   Map<String, List<String>> map = connection.getHeaderFields();
+       	for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+       		System.out.println(entry.getKey() + 
+                        " : " + entry.getValue());
+       	}
+       }
+        in.close();
+        System.out.println(reply.toString());
+	}
+}
