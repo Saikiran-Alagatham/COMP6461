@@ -1,7 +1,5 @@
-package assignment1;
-
-
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,11 @@ public class httpc {
 		boolean headers = true;
 		String key = null;
 		String value = null;
-		String jsonString = null;
+		String jsonString=null;
+				String contenttype = null;
+		byte[] postdata=null;
+		int p_length=0;
+		
 		for (int i = 0; i < string.length; i++) {
 			if(string[i].equals("--f")) {
 				String data=Fileread(string[i+1]);
@@ -63,31 +66,65 @@ public class httpc {
 			
 			
 			if (str.startsWith("http://")) {
+				
 				link=str;
 			}
 			if(str.equals("-h")) {
 				headers = true;
 			}
-			if(str.contains(":") && !(str.contains("'")) && !str.contains("http")) {
-				 key=str.split(":")[0];
-				 value=str.split(":")[1];
+			
+			if(str.startsWith("'{")) {
+				
+			if(str.contains(":")  && !str.contains("http")) {
+				 key=str.split(":")[0].replace("'{", "");
+				 value=str.split(":")[1].replace("}'", "");
 			}
-			if(str.contains("'")) {
+			}
+			if(str.startsWith("'{")) {
+				
 				jsonString=str.substring(0, str.length());
+				}
+			
+			if(str.startsWith("Content")) {
+				
+				contenttype=str.split(":")[1];
+				
+				System.out.println("content "+contenttype);
 			}
 			
 			
 		}
+		
+		 postdata = jsonString.getBytes(StandardCharsets.UTF_8);
+		 p_length = postdata.length;
+		 System.out.println(p_length);
+
 		URL u=new URL(link);
 		HttpURLConnection connection = (HttpURLConnection) u.openConnection();
 		connection.setRequestMethod("POST");
-		if(key!=null && value!=null) {
+		connection.setDoOutput(true);
+				if(key!=null && value!=null) {
 	    connection.setRequestProperty(key, value);
-	    connection.setRequestProperty("Content-Length", String.valueOf(jsonString.length()));
 	    
 		}
+		connection.setRequestProperty("Content-Length", Integer.toString(p_length));
 		connection.setRequestProperty("User-Agent", "Concordia-HTTP/1.0");
+		connection.setRequestProperty("Content-Type", contenttype);
+
 	    connection.setDoOutput(true);
+	    
+	    try
+        {
+            DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+            out.write(postdata);
+            out.flush();
+            out.close();
+        }
+         catch(IOException e)
+         {
+             e.printStackTrace();
+         }
+         
 	    Reader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
 	    StringBuilder sb = new StringBuilder();
 	    for (int c; (c = in.read()) >= 0;)
