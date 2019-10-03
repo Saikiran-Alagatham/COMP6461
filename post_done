@@ -1,19 +1,17 @@
 import java.io.BufferedReader;
-import org.json.JSONObject;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -27,18 +25,26 @@ public class httpc {
 		String input=sc.nextLine();
         String arg[] = input.split(" ");
         boolean noMethod=true;
+        boolean help=false;
 		
 		for (String str : arg) {
             if (str.toLowerCase().equals("help")) {
+            	noMethod=false;
+            	
                 help(arg);               
             }
-            if(str.toLowerCase().equals("get")) {
-            	noMethod=false;
-            	get(arg,input);
+            else if(str.toLowerCase().equals("get")) {
+            	if(noMethod==true) {
+            		noMethod=false;
+                	get(arg,input);
+            	}
+            	
             }
-            if(str.toLowerCase().equals("post")) {
-            	noMethod=false;
-            	post(arg,input);
+            else if(str.toLowerCase().equals("post")) {
+            	if(noMethod==true) {
+            		noMethod=false;
+            		post(arg,input);
+            	}
             }    
 		}
 		if(noMethod==true) {
@@ -49,13 +55,13 @@ public class httpc {
 	
 	private static void post(String string[],String input) throws IOException {
 		String link = null;
-		boolean headers = true;
+		boolean headers = false,filewrite=false;
 		String key = null;
 		String value = null;
-		String jsonString=null;
+		String jsonString=null,filename=null;
 		String h=null;
 		byte[] postdata=null;
-		int p_length=0;
+		int p_length=0,count=0;
 		ArrayList<String> head=new ArrayList<String>();
 	
 		for (String str : string)
@@ -69,14 +75,12 @@ public class httpc {
 			
 			if(str.equals("-h"))
 			{
-				headers = true;
-				for (int i = 0; i < string.length; i++) {
-				if (string[i].equals("-h")) {
-					h = string[i + 1];
-				} 
-				}
 				
-			
+				
+				
+				h=string[count+1];
+
+				headers = true;
 				if(h.contains(":") ) {
 					String key1=h.split(":")[0].replace("{", "");
 					String value1=h.split(":")[1].replace("}", "");
@@ -96,8 +100,6 @@ public class httpc {
 						 jsonString=Fileread(temp);
 						 postdata = jsonString.getBytes(StandardCharsets.UTF_8);
 						 p_length = postdata.length;
-						 System.out.println("jsonString  "+jsonString);
-						 System.out.println("length  "+p_length);
 					}
 						
 				}
@@ -125,8 +127,17 @@ public class httpc {
 						
 				}
 				
-				
-			}	
+			}
+			
+			if(str.equals("-o")) {
+				filewrite=true;
+			}
+			
+			if(str.contains(".txt")) {
+				filename=str;
+			}
+			
+			count++;
 			
 		}
 		
@@ -140,12 +151,13 @@ public class httpc {
 	    connection.setRequestProperty(key, value);
 	    
 		}
-		connection.setRequestProperty("Content-Length", Integer.toString(p_length));
+		
 		connection.setRequestProperty("User-Agent", "Concordia-HTTP/1.0");
 		
 		if(headers==true) {
 			for(int i=0;i<head.size();i++) {
 				connection.setRequestProperty(head.get(i), head.get(i+1));
+				System.out.println(head.get(i)+" "+head.get(i+1));
 				i++;
 			}
 		}
@@ -170,15 +182,25 @@ public class httpc {
 	    for (int c; (c = in.read()) >= 0;)
 	        sb.append((char)c);
 	    String response = sb.toString();
-	    System.out.println(response);
 	    
+	    if(filewrite==true) {
+	    	
+	    	BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
+	        bufferedWriter.write(response);
+	        bufferedWriter.close();
+	    }else {
+	    	 System.out.println(response);
+	
+	    }
+	   	    
 	}
 	
 	
 	public static String Fileread(String filename) {
+		String file=filename.substring(1,filename.length()-1);
         StringBuffer stringBuffer = new StringBuffer();
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(filename));
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = bufferedReader.readLine()) != null) {
                 stringBuffer.append(line);
@@ -194,7 +216,11 @@ public class httpc {
 
 
 	public static void help(String string[]) {
-        if ( string[0].equals("httpc") & string[1].equals("help") & string[2].equals("get") & string.length==3 ) {
+		if (string[0].equals("httpc") & string[1].equals("help") & string.length==2) {
+            System.out.println("httpc is a curl-like application but supports HTTP protocol only.\n" + "Usage: \n"+ "   httpc command [arguments]\n " + "The commands are:\n"+ "   get executes a HTTP GET request and prints the response.\n"
+                    + "   post executes a HTTP POST request and prints the response. \n"+ "   help prints this screen. \n"+ "Use \"httpc help [command]\" for more information about a command.\n");
+        }
+		else if ( string[0].equals("httpc") & string[1].equals("help") & string[2].equals("get") & string.length==3 ) {
             System.out.println(
                     "usage: httpc get [-v] [-h key:value] URL\n" + "Get executes a HTTP GET request for a given URL.\n"+ "   -v             Prints the detail of the response such as protocol, status,\n"
                             + "and headers.\n" + "   -h key:value   Associates headers to HTTP Request with the format\n"+ "'key:value'.");
@@ -205,18 +231,15 @@ public class httpc {
                      "and headers.\n" + "   -h key:value   Associates headers to HTTP Request with the format\n"+"'key:value'.\n" + "   -d string      Associates an inline data to the body HTTP POST request.\n"+
                      "   -f file        Associates the content of a file to the body HTTP POST\n" + "request.\n"+"Either [-d] or [-f] can be used but not both.");
         }
-        else if (string[0].equals("httpc") & string[1].equals("help") & string.length==2) {
-            System.out.println("httpc is a curl-like application but supports HTTP protocol only.\n" + "Usage: \n"+ "   httpc command [arguments]\n " + "The commands are:\n"+ "   get executes a HTTP GET request and prints the response.\n"
-                    + "   post executes a HTTP POST request and prints the response. \n"+ "   help prints this screen. \n"+ "Use \"httpc help [command]\" for more information about a command.\n");
-        }
+         
     }
 	
 	public static void get(String s[],String input) throws Exception {
-		String link = null,h=null,jsonString=null,key=null,value=null;
+		String link = null,h=null,jsonString=null,key=null,value=null,filename=null;
 		byte[] postdata=null;
-		boolean verbose=false;
+		boolean verbose=false,filewrite=false;
 		boolean headers=false;
-		int p_length=0;
+		int p_length=0,count=0;
 		ArrayList<String> head=new ArrayList<String>();
 		
 		for(String str:s) {
@@ -230,11 +253,7 @@ public class httpc {
 			if(str.equals("-h"))
 			{
 				headers = true;
-				for (int i = 0; i < s.length; i++) {
-				if (s[i].equals("-h")) {
-					h = s[i + 1];
-				} 
-				}
+				h=s[count+1];
 				
 			
 				if(h.contains(":") ) {
@@ -287,13 +306,23 @@ public class httpc {
 				
 			}	
 				
-				
+			if(str.equals("-o")) {
+				filewrite=true;
+			}
 			
+			if(str.contains(".txt")) {
+				filename=str;
+			}
+	
+			count++;
 			
 		}
+		
+		
 		URL u=new URL(link);
 		HttpURLConnection connection = (HttpURLConnection) u.openConnection();
 		connection.setRequestMethod("GET");
+		connection.setRequestProperty("User-Agent", "Concordia-HTTP/1.0");
 		connection.setDoOutput(true);
 		if(key!=null && value!=null) {
 			connection.setRequestProperty(key, value);
@@ -322,6 +351,16 @@ public class httpc {
        	}
        }
         in.close();
-        System.out.println(reply.toString());
+        
+        if(filewrite==true) {
+	    	
+	    	BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
+	        bufferedWriter.write(reply.toString());
+	        bufferedWriter.close();
+	    }else {
+	    	 System.out.println(reply.toString());
+	
+	    }
+        
 	}
 }
