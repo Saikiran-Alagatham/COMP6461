@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,8 @@ public class httpc {
 
 	public static void main(String[] args) throws Exception {
 		Scanner sc = new Scanner(System.in);
-        String arg[] = sc.nextLine().split(" ");
+		String input=sc.nextLine();
+        String arg[] = input.split(" ");
         boolean noMethod=true;
 		
 		for (String str : arg) {
@@ -32,28 +34,29 @@ public class httpc {
             }
             if(str.toLowerCase().equals("get")) {
             	noMethod=false;
-            	get(arg);
+            	get(arg,input);
             }
             if(str.toLowerCase().equals("post")) {
             	noMethod=false;
-            	post(arg);
+            	post(arg,input);
             }    
 		}
 		if(noMethod==true) {
-		get(arg);	
+		get(arg,input);	
 		}	
 	}
 	
 	
-	private static void post(String string[]) throws IOException {
+	private static void post(String string[],String input) throws IOException {
 		String link = null;
 		boolean headers = true;
 		String key = null;
 		String value = null;
 		String jsonString=null;
-				String contenttype = null;
+		String h=null;
 		byte[] postdata=null;
 		int p_length=0;
+		ArrayList<String> head=new ArrayList<String>();
 	
 		for (String str : string)
 		{
@@ -67,13 +70,23 @@ public class httpc {
 			if(str.equals("-h"))
 			{
 				headers = true;
-			}
+				for (int i = 0; i < string.length; i++) {
+				if (string[i].equals("-h")) {
+					h = string[i + 1];
+				} 
+				}
+				
 			
-			if(str.startsWith("Content"))
-			{
-				contenttype=str.split(":")[1];
+				if(h.contains(":") ) {
+					String key1=h.split(":")[0].replace("{", "");
+					String value1=h.split(":")[1].replace("}", "");
+					head.add(key1);
+					head.add(value1);
+				}
+				
 				
 			}
+			
 			
 			if(str.equals("-f")) 
 			{
@@ -90,7 +103,7 @@ public class httpc {
 				}
 				
 			}else if(str.equals("-d")){
-				System.out.println("in d");
+			
 				for (String temp : string)
 				{
 					if(temp.startsWith("{"))
@@ -129,7 +142,14 @@ public class httpc {
 		}
 		connection.setRequestProperty("Content-Length", Integer.toString(p_length));
 		connection.setRequestProperty("User-Agent", "Concordia-HTTP/1.0");
-		connection.setRequestProperty("Content-Type", contenttype);
+		
+		if(headers==true) {
+			for(int i=0;i<head.size();i++) {
+				connection.setRequestProperty(head.get(i), head.get(i+1));
+				i++;
+			}
+		}
+		
 
 	    connection.setDoOutput(true);
 	    
@@ -191,9 +211,14 @@ public class httpc {
         }
     }
 	
-	public static void get(String s[]) throws Exception {
-		String link = null;
+	public static void get(String s[],String input) throws Exception {
+		String link = null,h=null,jsonString=null,key=null,value=null;
+		byte[] postdata=null;
 		boolean verbose=false;
+		boolean headers=false;
+		int p_length=0;
+		ArrayList<String> head=new ArrayList<String>();
+		
 		for(String str:s) {
 			if (str.startsWith("http://")) {
 				link=str;
@@ -201,12 +226,89 @@ public class httpc {
 			if (str.equals("-v")) {
                 verbose = true;
             }
+			
+			if(str.equals("-h"))
+			{
+				headers = true;
+				for (int i = 0; i < s.length; i++) {
+				if (s[i].equals("-h")) {
+					h = s[i + 1];
+				} 
+				}
+				
+			
+				if(h.contains(":") ) {
+					String key1=h.split(":")[0].replace("{", "");
+					String value1=h.split(":")[1].replace("}", "");
+					head.add(key1);
+					head.add(value1);
+				}
+				
+				
+			}
+			
+			if(str.equals("-f")) 
+			{
+				for (String temp : s)
+				{
+					if(temp.startsWith("'")&& temp.contains(".")) {
+						 jsonString=Fileread(temp);
+						 postdata = jsonString.getBytes(StandardCharsets.UTF_8);
+						 p_length = postdata.length;
+						 System.out.println("jsonString  "+jsonString);
+						 System.out.println("length  "+p_length);
+					}
+						
+				}
+				
+			}else if(str.equals("-d")){
+			
+				for (String temp : s)
+				{
+					if(temp.startsWith("{"))
+					{
+						
+					if(temp.contains(":")  && !temp.contains("http")) {
+						 key=temp.split(":")[0].replace("{", "");
+						 value=temp.split(":")[1].replace("}", "");
+					}
+					}
+					
+					if(temp.startsWith("{")) 
+					{
+						jsonString=temp.substring(0, temp.length());
+						postdata = jsonString.getBytes(StandardCharsets.UTF_8);
+						p_length = postdata.length;
+
+					}
+						
+				}
+				
+				
+			}	
+				
+				
+			
+			
 		}
 		URL u=new URL(link);
 		HttpURLConnection connection = (HttpURLConnection) u.openConnection();
 		connection.setRequestMethod("GET");
+		connection.setDoOutput(true);
+		if(key!=null && value!=null) {
+			connection.setRequestProperty(key, value);
+		}
+		if(headers==true) {
+			for(int i=0;i<head.size();i++) {
+				connection.setRequestProperty(head.get(i), head.get(i+1));
+				i++;
+			}
+		}
 		InputStream in = connection.getInputStream();
         BufferedReader inp = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+     
+        
+        
         String i;
         StringBuffer reply = new StringBuffer();
         while ((i = inp.readLine()) != null) {
