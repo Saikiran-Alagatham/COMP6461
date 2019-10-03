@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import org.json.JSONObject;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -53,51 +54,70 @@ public class httpc {
 				String contenttype = null;
 		byte[] postdata=null;
 		int p_length=0;
-		
-		for (int i = 0; i < string.length; i++) {
-			if(string[i].equals("--f")) {
-				String data=Fileread(string[i+1]);
-				
-			}
-		} 
 	
-		for (String str : string) {
+		for (String str : string)
+		{
 			
 			
-			
-			if (str.startsWith("http://")) {
-				
+			if (str.startsWith("http://")) 
+			{
 				link=str;
 			}
-			if(str.equals("-h")) {
+			
+			if(str.equals("-h"))
+			{
 				headers = true;
 			}
 			
-			if(str.startsWith("'{")) {
-				
-			if(str.contains(":")  && !str.contains("http")) {
-				 key=str.split(":")[0].replace("'{", "");
-				 value=str.split(":")[1].replace("}'", "");
-			}
-			}
-			if(str.startsWith("'{")) {
-				
-				jsonString=str.substring(0, str.length());
-				}
-			
-			if(str.startsWith("Content")) {
-				
+			if(str.startsWith("Content"))
+			{
 				contenttype=str.split(":")[1];
 				
-				System.out.println("content "+contenttype);
 			}
 			
+			if(str.equals("-f")) 
+			{
+				for (String temp : string)
+				{
+					if(temp.startsWith("'")&& temp.contains(".")) {
+						 jsonString=Fileread(temp);
+						 postdata = jsonString.getBytes(StandardCharsets.UTF_8);
+						 p_length = postdata.length;
+						 System.out.println("jsonString  "+jsonString);
+						 System.out.println("length  "+p_length);
+					}
+						
+				}
+				
+			}else if(str.equals("-d")){
+				System.out.println("in d");
+				for (String temp : string)
+				{
+					if(temp.startsWith("{"))
+					{
+						
+					if(temp.contains(":")  && !temp.contains("http")) {
+						 key=temp.split(":")[0].replace("{", "");
+						 value=temp.split(":")[1].replace("}", "");
+					}
+					}
+					
+					if(temp.startsWith("{")) 
+					{
+						jsonString=temp.substring(0, temp.length());
+						postdata = jsonString.getBytes(StandardCharsets.UTF_8);
+						p_length = postdata.length;
+
+					}
+						
+				}
+				
+				
+			}	
 			
 		}
 		
-		 postdata = jsonString.getBytes(StandardCharsets.UTF_8);
-		 p_length = postdata.length;
-		 System.out.println(p_length);
+		
 
 		URL u=new URL(link);
 		HttpURLConnection connection = (HttpURLConnection) u.openConnection();
