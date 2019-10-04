@@ -1,3 +1,4 @@
+package assignment1;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
@@ -234,8 +235,7 @@ public class httpc {
          
     }
 	
-	public static void get(String s[],String input) throws Exception {
-		String link = null,h=null,jsonString=null,key=null,value=null,filename=null;
+	public static void get(String s[],String input) throws Exception {		String link = null,h=null,jsonString=null,key=null,value=null,filename=null;
 		byte[] postdata=null;
 		boolean verbose=false,filewrite=false;
 		boolean headers=false;
@@ -243,7 +243,7 @@ public class httpc {
 		ArrayList<String> head=new ArrayList<String>();
 		
 		for(String str:s) {
-			if (str.startsWith("http://")) {
+			if (str.startsWith("http://") || str.startsWith("https://")) {
 				link=str;
 			}
 			if (str.equals("-v")) {
@@ -274,8 +274,8 @@ public class httpc {
 						 jsonString=Fileread(temp);
 						 postdata = jsonString.getBytes(StandardCharsets.UTF_8);
 						 p_length = postdata.length;
-						 System.out.println("jsonString  "+jsonString);
-						 System.out.println("length  "+p_length);
+						 //System.out.println("jsonString  "+jsonString);
+						 //System.out.println("length  "+p_length);
 					}
 						
 				}
@@ -358,9 +358,53 @@ public class httpc {
 	        bufferedWriter.write(reply.toString());
 	        bufferedWriter.close();
 	    }else {
-	    	 System.out.println(reply.toString());
+	    	if(reply.toString().contains("301")) {
+	    		String s1 = reply.toString();
+	    		String[] split=s1.split(" ");
+	    		for (String string : split) {
+					if(string.startsWith("HREF=")) {
+						int start =string.indexOf("=");
+						int end = string.indexOf(">");
+						
+						String newUrl=string.substring(start+1, end);
+						String finalUrl=newUrl.substring(1, newUrl.length()-1);
+						URL u1=new URL(finalUrl);
+						HttpURLConnection connection1 = (HttpURLConnection) u1.openConnection();
+						connection1.setRequestMethod("GET");
+						connection1.setRequestProperty("User-Agent", "Concordia-HTTP/1.0");
+						connection1.setDoOutput(true);
+						if(key!=null && value!=null) {
+							connection1.setRequestProperty(key, value);
+						}
+						if(headers==true) {
+							for(int i1=0;i1<head.size();i1++) {
+								connection1.setRequestProperty(head.get(i1), head.get(i1+1));
+								i1++;
+							}
+						}
+						InputStream in1 = connection1.getInputStream();
+				        BufferedReader inp1 = new BufferedReader(new InputStreamReader(connection1.getInputStream()));
+				     
+				        
+				        
+				        String i2;
+				        StringBuffer reply1 = new StringBuffer();
+				        while ((i2 = inp1.readLine()) != null) {
+				        	reply1.append(i2).append("\n");
+				        }
+				       
+				        in1.close();
+				        
+				     
+					    	System.out.println(reply1.toString());
+					}
+				}
+	    	}
+	    	 
 	
+	 	    	else {
+	    		System.out.println(reply.toString());
+	    	}
 	    }
-        
 	}
 }
