@@ -1,0 +1,50 @@
+package assignment1;
+
+
+
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
+import java.util.StringTokenizer;
+
+public class Connection implements Runnable{
+		
+	public static String SERVER_NAME = "Server: Concordia COMP 6461";
+    private Socket socket;
+    private StringBuilder responseToSend;
+	
+	
+	public void startserver(String path, int port,boolean message) throws IOException {
+		ServerSocket serverConnection = new ServerSocket(port);
+		System.out.println("Server started.\nListening for connections on port number : " + port + " ...\n");
+		
+		while(true) {
+			
+			Connection  con = new Connection();
+			Socket mySocket=serverConnection.accept();
+			
+			if(message) {
+				System.out.println("Connection opened (" + new Date() +")");
+			}
+			
+			synchronized (this) {
+				Thread thread = new Thread(con);
+				thread.start();
+			}
+		}
+	
+	}
+
+	
+	@Override
+	public void run() {
+		
+		
+	}
+	
+	
+}
