@@ -1,0 +1,38 @@
+package assignment1;
+
+import java.io.IOException;
+import java.util.Scanner;
+
+public class Server {
+	private  int port=8080;
+	private   String path="";
+	boolean message;
+	
+	public static void main(String[] args) throws IOException {		
+		boolean flag = true;
+        System.out.println("Enter the command to start the server...");
+        Scanner sc = new Scanner(System.in);
+        String arg[] = sc.nextLine().split(" ");
+        if (flag) {
+            Server httpObject = new Server();
+            httpObject.split(arg);          
+        }
+	}
+	
+	public void split(String arguments[]) throws IOException {
+        for (int i = 0; i < arguments.length; i++) {
+            if (arguments[i].equals("-v")) {
+                message = true;
+            }
+            if (arguments[i].equals("-p")) {
+                port = Integer.parseInt(arguments[i + 1]);
+            }
+            if (arguments[i].equals("-d")) {
+                path = arguments[i + 1].replace("'", "");
+            }
+        } 
+        
+        Connection con = new Connection();
+        con.startserver(path, port,message);
+    }
+}
